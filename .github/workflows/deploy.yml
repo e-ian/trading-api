@@ -45,4 +45,5 @@ jobs:
           curl -X POST https://api.render.com/v1/services/${{ secrets.RENDER_SERVICE_ID }}/deploy \
           -H "Authorization: Bearer $RENDER_API_KEY" \
           -H "Content-Type: application/json" \
-          -d '{"dockerImage": "docker.io/${{ secrets.DOCKER_USERNAME }}/trading_api:latest"}'
+          -d '{"dockerImage": "docker.io/${{ secrets.DOCKER_USERNAME }}/trading_api:latest"}' \
+          --verbose

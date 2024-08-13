@@ -19,16 +19,14 @@ def get_ticker_data():
         return jsonify({'error': 'time_period is required'}), 400
 
     try:
-        # Parse date and time_period
         if date_str:
-            # Interpret the date as day.month.year
             date = datetime.strptime(date_str, '%d.%m.%Y').date()
-            session['date'] = date_str
+            # session['date'] = date_str
         else:
-            if 'date' in session:
-                date = datetime.strptime(session['date'], '%d.%m.%Y').date()
-            else:
-                date = datetime.now().date()
+            # if 'date' in session:
+            #     date = datetime.strptime(session['date'], '%d.%m.%Y').date()
+            # else:
+            date = datetime.now().date()
 
         # Convert time_period to datetime.time
         time_period = datetime.strptime(time_period_str, '%H:%M').time()
