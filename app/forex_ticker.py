@@ -1,47 +1,41 @@
-from flask import Blueprint, request, jsonify, session
+from flask import Blueprint, request, jsonify
 from datetime import datetime, timedelta
 import pandas as pd
-from .config import Config
 import os
+from .config import Config
 
 api_blueprint = Blueprint('forex_tickers', __name__)
-
-# DATA_FOLDER = 'data/EURUSD=X'
-
 
 @api_blueprint.route('/ticker_data', methods=['POST'])
 def get_ticker_data():
     req_data = request.get_json()
-    date_str = req_data.get('date')
-    time_period_str = req_data.get('time_period')
 
-    if not time_period_str:
-        return jsonify({'error': 'time_period is required'}), 400
+    # Extract and validate request data
+    time_str = req_data.get('time')
+    ticker = req_data.get('ticker')
 
-    try:
-        if date_str:
-            date = datetime.strptime(date_str, '%d.%m.%Y').date()
-            # session['date'] = date_str
-        else:
-            # if 'date' in session:
-            #     date = datetime.strptime(session['date'], '%d.%m.%Y').date()
-            # else:
-            date = datetime.now().date()
-
-        # Convert time_period to datetime.time
-        time_period = datetime.strptime(time_period_str, '%H:%M').time()
-        
-    except ValueError:
-        return jsonify({'error': 'Invalid date or time format'}), 400
-
-    # Construct the filename based on the date only
-    file_name = f"{date.strftime('%d.%m.%Y')}_5m.csv"
-    file_path = os.path.join(Config.DATA_PATH, file_name)
-
-    if not os.path.isfile(file_path):
-        return jsonify({'error': f'No data file found for {date_str}'}), 404
+    if not time_str:
+        return jsonify({'error': 'time is required'}), 400
+    if not ticker:
+        return jsonify({'error': 'ticker is required'}), 400
 
     try:
+        # Parse the time in RFC 3339 format
+        time = datetime.fromisoformat(time_str.rstrip('Z'))
+        date = time.date()
+        time_period = time.time()
+
+        # Construct file path based on the ticker and date
+        file_date_str = date.strftime('%d.%m.%Y')
+        folder_name = f"{ticker}=X"
+        file_name = f"{file_date_str}_5m.csv"
+        file_path = os.path.join(Config.DATA_PATH, folder_name, file_name)
+        print('filee', file_path)
+
+        if not os.path.isfile(file_path):
+            return jsonify({'error': f'No data file found for ticker {ticker} and date {date.strftime("%d-%m-%Y")}'}) , 404
+
+        # Read and process the CSV file
         df = pd.read_csv(file_path)
 
         if 'Datetime' not in df.columns:
@@ -60,5 +54,7 @@ def get_ticker_data():
         result = filtered_df.to_dict(orient='records')
         return jsonify(result)
 
+    except ValueError:
+        return jsonify({'error': 'Invalid time format'}), 400
     except Exception as e:
         return jsonify({'error': str(e)}), 500
