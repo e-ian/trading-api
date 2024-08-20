@@ -50,6 +50,11 @@ def get_ticker_data():
 
         if filtered_df.empty:
             return jsonify({'error': 'No data available for the given date and time period'}), 404
+        
+        # If there's exactly one record, return it as a JSON object
+        if len(filtered_df) == 1:
+            result = filtered_df.iloc[0].to_dict()
+            return jsonify(result)
 
         result = filtered_df.to_dict(orient='records')
         return jsonify(result)
